@@ -1,12 +1,30 @@
 import streamlit as st
 import numpy as np
 import pickle
+import os
 
-model = pickle.load(open("model.pkl", "rb"))
-columns = pickle.load(open("columns.pkl", "rb"))
+# Safe file loading
+BASE_DIR = os.path.dirname(__file__)
 
+model_path = os.path.join(BASE_DIR, "model.pkl")
+columns_path = os.path.join(BASE_DIR, "columns.pkl")
+
+# Check files
+if not os.path.exists(model_path):
+    raise ValueError("❌ model.pkl missing hai")
+
+if not os.path.exists(columns_path) or os.path.getsize(columns_path) == 0:
+    raise ValueError("❌ columns.pkl missing ya empty hai")
+
+# Load files
+with open(model_path, "rb") as f:
+    model = pickle.load(f)
+
+with open(columns_path, "rb") as f:
+    columns = pickle.load(f)
+
+# UI
 st.set_page_config(page_title="Churn Prediction", layout="wide")
-
 st.title("📊 Customer Churn Prediction System")
 
 # Sidebar
@@ -23,7 +41,7 @@ total = st.number_input("Total Charges", 0.0, 10000.0, 2000.0)
 contract = st.selectbox("Contract", ["Month-to-month", "One year", "Two year"])
 internet = st.selectbox("Internet Service", ["DSL", "Fiber optic", "No"])
 
-# Encode (simple demo)
+# Encode
 contract_map = {"Month-to-month":0, "One year":1, "Two year":2}
 internet_map = {"DSL":0, "Fiber optic":1, "No":2}
 
@@ -46,7 +64,6 @@ if st.button("Predict Churn"):
     pred = int(prob > threshold)
 
     st.subheader("📈 Result")
-
     st.write(f"Churn Probability: **{prob:.2f}**")
 
     if pred == 1:
@@ -54,17 +71,6 @@ if st.button("Predict Churn"):
     else:
         st.success("✅ Safe Customer")
 
-    # Business insight
     if prob > 0.7:
         st.warning("Offer discount or call customer immediately!")
-
-
-import pickle
-import os
-
-if os.path.exists("columns.pkl") and os.path.getsize("columns.pkl") > 0:
-    with open("columns.pkl", "rb") as f:
-        columns = pickle.load(f)
-else:
-    raise ValueError("❌ columns.pkl file empty ya missing hai")
 
